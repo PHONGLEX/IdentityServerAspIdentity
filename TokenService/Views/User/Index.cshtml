@@ -1,0 +1,199 @@
+﻿@{
+    ViewData["Title"] = "Index";
+}
+
+<table class="table table-striped table-bordered" id="userTable">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Email</th>
+        </tr>
+    </thead>
+</table>
+
+<div role="dialog" id="editModal" tabindex="-1" aria-hidden="true" class="modal fade in">
+    <div class="modal-dialog " role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Edit User</h4>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" data-ajax="true" data-ajax-method="POST" data-ajax-url="/User/Edit" data-ajax-success="editDone" data-ajax-failure="editFail">
+                    <div id="editError" class="alert alert-danger" role="alert" style="display: none;"></div>
+                    <input name="id" type="hidden" />
+                    <ul id="tabs" class="nav nav-tabs">
+                        <li class="">
+                            <a href="#roles" data-toggle="tab" aria-expanded="false">Roles</a>
+                        </li>
+                        <li class="">
+                            <a href="#claims" data-toggle="tab" aria-expanded="false">Claims</a>
+                        </li>
+                    </ul>
+
+                    <br>
+
+                    <div class="tab-content">
+                        <div id="roles" class="tab-pane">
+                            <div class="form-group">
+                                @foreach (var role in ViewBag.Roles)
+                                {
+                                    <div class="checkbox">
+                                        <label><input name="roles" type="checkbox" value="@role.Value">@role.Value</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div id="claims" class="tab-pane">
+                            <table id="claimsTable" class="table table-condensed">
+                                <tbody>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Value</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>
+                                            <select id="newType" asp-items="@(new SelectList(ViewBag.ClaimTypes))">
+                                                <option></option>
+                                            </select>
+                                        </td>
+                                        <td><input id="newValue" type="text"></td>
+                                        <td><a id="addClaim">Add</a></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="editForm" class="btn btn-primary">Update</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+    {
+    <script type="text/javascript" src="~/lib/jquery-ajax-unobtrusive/dist/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#userTable').DataTable({
+                "ajax": {
+                    "url": "/User/GetList",
+                    "type": "GET",
+                    "datatype": "json",
+                    "dataSrc": function (d) {
+                        return d;
+                    }
+                },
+                "columns": [
+                    { "data": "id" },
+                    { "data": "email" }
+                ],
+                select: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        text: "New",
+                        action: function (e, dt, button, config) {
+                            $('#roleError').hide();
+                            $('#roleForm').trigger('reset');
+                            $('#roleModal').modal({ backdrop: 'static' });
+                        }
+                    },
+                    {
+                        extend: "selectedSingle",
+                        text: "Edit",
+                        action: function (e, dt, button, config) {
+                            var data = dt.row({ selected: true }).data();
+                            $('#editError').hide();
+                            $('#tabs a:first').tab('show');
+                            $('#editForm').trigger('reset');
+                            $('#claimsTable tbody tr:not(:first)').remove();
+
+                            $('#editForm input[name=id]').val(data.id);
+
+                            $.each(data.roles, function (index, value) {
+                                $('#editForm :checkbox[value=' + value + ']').prop('checked', true);
+                            });
+
+                            $.each(data.claims, function (index, value) {
+                                $('#claimsTable tbody').append('<tr><td data-field="key">' + value.key + '</td>' +
+                                    '<td data-field="value">' + value.value + '</td><td><a class="removeClaim">Remove</a></td></tr>');
+                            });
+
+                            $('#editModal').modal({ backdrop: 'static' });
+                        }
+                    },
+                    {
+                        extend: "selectedSingle",
+                        text: "Delete",
+                        action: function (e, dt, button, config) {
+                            if (confirm('Are you sure?')) {
+                                var data = dt.row({ selected: true }).data();
+
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/User/Delete',
+                                    data: { id: data.id }
+                                })
+                                    .done(delDone)
+                                    .fail(delFail);
+                            }
+                        }
+                    },
+                ]
+            });
+
+            $('#addClaim').click(function () {
+                if ($('#newType').val() && $('#newValue').val()) {
+                    $('#claimsTable tbody').append('<tr><td data-field="key">' + $('#newType').val() + '</td>' +
+                        '<td data-field="value">' + $('#newValue').val() + '</td><td><a class="removeClaim">Remove</a></td></tr>');
+                    $('#newType, #newValue').val('');
+                }
+                else
+                    alert('Incomplete entry');
+            });
+
+            $('#claimsTable').on('click', 'a.removeClaim', function () {
+                if (confirm('Are you sure?'))
+                    $(this).closest('tr').remove();
+            });
+
+            $("#editForm").submit(function () {
+                $('#claimsTable tbody tr:gt(0)').each(function (index, elem) {
+                    debugger
+                    var key = $(this).find('td[data-field=key]');
+                    key.append($('<input>').attr('name', 'claims[' + index + '][key]').attr('type', 'hidden').val(key.text()));
+
+                    var val = $(this).find('td[data-field=value]');
+                    val.append($('<input>').attr('name', 'claims[' + index + '][value]').attr('type', 'hidden').val(val.text()));
+                });
+            });
+
+            editDone = function (data, status, xhr) {
+                $('#editModal').modal('hide');
+                $('#userTable').DataTable().invalidate().draw();
+            }
+
+            editFail = function (xhr, status, error) {
+                $('#editError').html(xhr.responseText || error).fadeIn();
+                $('#claimsTable input[type="hidden"]').remove();
+            }
+
+            function delDone(data, status, xhr) {
+                $('#usersTable').DataTable().draw();
+            }
+
+            function delFail(xhr, status, error) {
+                alert(xhr.responseText || error);
+            }
+        });
+    </script>
+}
+

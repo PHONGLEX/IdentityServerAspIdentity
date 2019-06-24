@@ -17,6 +17,9 @@
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="//cdn.datatables.net/select/1.2.5/css/select.dataTables.min.css" />
+    <link rel="stylesheet" href="//cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css" />
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -37,14 +40,14 @@
             </div>
             @if (string.IsNullOrWhiteSpace(name))
             {
-            <ul class="nav navbar-nav">
-                <li>
-                    <a asp-action="Register" asp-controller="Account">Register</a>
-                </li>
-                <li>
-                    <a asp-action="Login" asp-controller="Account">Login</a>
-                </li>
-            </ul>
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a asp-action="Register" asp-controller="Account">Register</a>
+                    </li>
+                    <li>
+                        <a asp-action="Login" asp-controller="Account">Login</a>
+                    </li>
+                </ul>
             }
             @if (!string.IsNullOrWhiteSpace(name))
             {
@@ -55,17 +58,28 @@
                             <li><a asp-action="Logout" asp-controller="Account">Logout</a></li>
                         </ul>
                     </li>
+                    @if (Context.User.IsInRole("SUPERADMIN"))
+                    {
+                        <li>
+                            <a asp-action="Index" asp-controller="Role">Role Management</a>
+                        </li>
+                        <li>
+                            <a asp-action="Index" asp-controller="User">User Management</a>
+                        </li>
+                    }
                 </ul>
             }
         </div>
     </div>
-
     <div class="container body-content">
         @RenderBody()
     </div>
-
     <script src="~/lib/jquery/jquery.js"></script>
     <script src="~/lib/bootstrap/js/bootstrap.js"></script>
+    <script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+    <script src="//cdn.datatables.net/select/1.2.5/js/dataTables.select.min.js"></script>
+    <script src="//cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

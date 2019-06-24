@@ -5,7 +5,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <Compile Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <Content Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <EmbeddedResource Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <None Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\dist\jquery.unobtrusive-ajax.js" />
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\dist\jquery.unobtrusive-ajax.min.js" />
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\README.md" />
   </ItemGroup>
 
   <ItemGroup>

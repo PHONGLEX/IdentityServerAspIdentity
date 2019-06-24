@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TokenService.Data;
 using TokenService.Models;
+using TokenService.Services.User;
 
 namespace TokenService
 {
@@ -34,7 +35,7 @@ namespace TokenService
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<ApplicationUser, ApplicationRole> ()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -58,6 +59,8 @@ namespace TokenService
                 // this enables automatic token cleanup. this is optional.
                 options.EnableTokenCleanup = true;
             }).AddAspNetIdentity<ApplicationUser>();
+
+            services.AddScoped<IUserServices, UserServices>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
