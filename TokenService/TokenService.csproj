@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <Content Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <EmbeddedResource Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+    <None Remove="wwwroot\lib\jquery\jquery-ajax-unobtrusive\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\dist\jquery.unobtrusive-ajax.js" />
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\dist\jquery.unobtrusive-ajax.min.js" />
+    <None Include="wwwroot\lib\jquery-ajax-unobtrusive\README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4" Version="2.4.0" />
+    <PackageReference Include="IdentityServer4.AspNetIdentity" Version="2.4.0" />
+    <PackageReference Include="IdentityServer4.EntityFramework" Version="2.4.0" />
+    <PackageReference Include="IdentityServer4.EntityFramework.Storage" Version="2.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" />
+  </ItemGroup>
+
+</Project>

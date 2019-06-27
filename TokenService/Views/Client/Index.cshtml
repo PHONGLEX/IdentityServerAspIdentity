@@ -1,0 +1,174 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+<table class="table table-striped table-bordered" id="clientTable" data-ajax="/Client/GetList">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col" data-data="id">Id</th>
+            <th scope="col" data-data="name">Name</th>
+        </tr>
+    </thead>
+</table>
+
+<div role="dialog" id="clientModal" tabindex="-1" aria-hidden="true" class="modal fade in">
+    <div class="modal-dialog " role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Add Client</h4>
+            </div>
+            <div class="modal-body">
+                <form id="clientForm" data-ajax="true" data-ajax-method="POST" data-ajax-url="/client/create" data-ajax-success="clientDone" data-ajax-failure="clientFail">
+                    <div id="clientError" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+                    <ul id="tabs" class="nav nav-tabs">
+                        <li class="">
+                            <a href="#client" data-toggle="tab" aria-expanded="false">Client</a>
+                        </li>
+                        <li class="">
+                            <a href="#secret" data-toggle="tab" aria-expanded="false">Secret</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="client" class="tab-pane">
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <input name="clientName" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">ClientId:</label>
+                                <input name="clientId" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">Scope:</label>
+                                <input name="allowedScopes" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">Redirect Uri:</label>
+                                <input name="redirectUris" type="text" class="form-control" required="">
+                            </div>
+                        </div>
+
+                        <div id="secret" class="tab-pane">
+                            <table id="secretTable" class="table table-condensed">
+                                <tbody>
+                                    <tr>
+                                        <th>Value</th>
+                                        <th>Expire</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><input id="newValue" type="text"></td>
+                                        <td><input id="newExpire" type="date"></td>
+                                        <td><a id="addSecret">Add</a></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="clientForm" class="btn btn-primary">Create</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script type="text/javascript" src="~/lib/jquery-ajax-unobtrusive/dist/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#clientTable').DataTable({
+                select: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        text: "New",
+                        action: function (e, dt, button, config) {
+                            $('#clientError').hide();
+                            $('#clientForm').trigger('reset');
+                            $('#clientModal').modal({ backdrop: 'static' });
+                            $('#tabs a:first').tab('show');
+                            $('#secretTable tbody tr:gt(0)').remove();
+                        }
+                    },
+                    {
+                        extend: "selectedSingle",
+                        text: "Edit"
+                    },
+                    {
+                        extend: "selectedSingle",
+                        text: "Delete",
+                        action: function (e, dt, button, config) {
+                            if (confirm('Are you sure?')) {
+                                var data = dt.row({ selected: true }).data();
+
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/Client/Delete',
+                                    data: { id: data.id }
+                                })
+                                    .done(delDone)
+                                    .fail(delFail);
+                            }
+                        }
+                    },
+                ]
+            });
+
+            $('#addSecret').click(function () {
+                if ($('#newValue').val() && $('#newExpire').val()) {
+                    $('#secretTable tbody').append('<tr><td data-field="key">' + $('#newValue').val() + '</td>' +
+                        '<td data-field="value">' + $('#newExpire').val() + '</td><td><a class="removeSecret">Remove</a></td></tr>');
+                    $('#newValue, #newExpire').val('');
+                }
+                else
+                    alert('Incomplete entry');
+            });
+
+            $('#secretTable').on('click', 'a.removeSecret', function () {
+                if (confirm('Are you sure?'))
+                    $(this).closest('tr').remove();
+            });
+
+            $("#clientForm").submit(function () {
+                $('#secretTable tbody tr:gt(0)').each(function (index, elem) {
+                    var key = $(this).find('td[data-field=key]');
+                    key.append($('<input>').attr('name', 'secrets[' + index + '][key]').attr('type', 'hidden').val(key.text()));
+
+                    var val = $(this).find('td[data-field=value]');
+                    val.append($('<input>').attr('name', 'secrets[' + index + '][value]').attr('type', 'hidden').val(val.text()));
+                });
+            });
+
+            clientDone = function (data, status, xhr) {
+                $('#clientModal').modal('hide');
+                $('#clientTable').DataTable().ajax.reload(null, false);
+            }
+
+            clientFail = function (xhr, status, error) {
+                $('#clientError').html(xhr.responseText || error).fadeIn();
+            }
+
+            function delDone(data, status, xhr) {
+                $('#clientTable').DataTable().ajax.reload(null, false);
+            }
+
+            function delFail(xhr, status, error) {
+                alert(xhr.responseText || error);
+            }
+        });
+    </script>
+}
