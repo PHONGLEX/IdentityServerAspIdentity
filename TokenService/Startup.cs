@@ -1,4 +1,5 @@
 ﻿using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
 using Microsoft.AspNetCore.Builder;
@@ -63,6 +64,8 @@ namespace TokenService
 
             services.AddScoped<IUserServices, UserServices>();
             services.AddScoped<IClientServices, ClientServices>();
+            services.AddDbContext<IAdminConfigurationDbContext, IdentityServerConfigurationDbContext>(options =>
+                options.UseSqlServer(connectionString));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

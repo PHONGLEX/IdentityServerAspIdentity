@@ -28,22 +28,27 @@ namespace TokenService.Controllers
             return View();
         }
 
-        public IActionResult GetList()
+        public async Task<IActionResult> GetList()
         {
-            var clients = _clientServices.GetAll();
+            var clients = await _clientServices.GetAll();
 
             return Json(new
             {
-                data = clients.Select(c => new
+                data = clients.Where(c => c != null).Select(c => new
                 {
                     Id = c.ClientId,
                     Name = c.ClientName,
+                    Secrets = c.ClientSecrets,
+                    RedirectUri = c.RedirectUris,
+                    Scope = c.AllowedScopes,
+                    c.AllowOfflineAccess,
+                    c.AlwaysIncludeUserClaimsInIdToken
                 })
             });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(IdentityServer4.Models.Client client, List<KeyValuePair<string, string>> secrets)
+        public async Task<IActionResult> Create(IdentityServer4.Models.Client client, List<KeyValuePair<string, string>> secrets, bool allowOfflineAccess)
         {
             try
             {
@@ -67,6 +72,8 @@ namespace TokenService.Controllers
                             client.AllowedScopes.Add(s);
                         }
                     }
+                    // the access token (and its claims) should be updated on a refresh token request
+                    client.UpdateAccessTokenClaimsOnRefresh = true;
 
                     var result = await _clientServices.Create(client);
                     return Json(result);

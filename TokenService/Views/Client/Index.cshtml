@@ -52,6 +52,16 @@
                                 <label for="name">Redirect Uri:</label>
                                 <input name="redirectUris" type="text" class="form-control" required="">
                             </div>
+
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label><input name="allowOfflineAccess" type="checkbox" />Refresh Token</label>
+                                </div>
+
+                                <div class="checkbox">
+                                    <label><input name="alwaysIncludeUserClaimsInIdToken" type="checkbox" />Include User's Claim in Id Token</label>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="secret" class="tab-pane">
@@ -85,6 +95,90 @@
     </div>
 </div>
 
+<div role="dialog" id="clientEditModal" tabindex="-1" aria-hidden="true" class="modal fade in">
+    <div class="modal-dialog " role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Add Client</h4>
+            </div>
+            <div class="modal-body">
+                <form id="clientFormEdit" data-ajax="true" data-ajax-method="POST" data-ajax-url="/client/edit" data-ajax-success="clientDone" data-ajax-failure="clientFail">
+                    <div id="editError" class="alert alert-danger" role="alert" style="display: none;"></div>
+                    <input name="id" type="hidden" />
+                    <ul id="tabsEditClient" class="nav nav-tabs">
+                        <li class="">
+                            <a href="#clientEdit" data-toggle="tab" aria-expanded="false">Client</a>
+                        </li>
+                        <li class="">
+                            <a href="#secretEdit" data-toggle="tab" aria-expanded="false">Secret</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="clientEdit" class="tab-pane">
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <input name="clientName" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">ClientId:</label>
+                                <input name="clientId" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">Scope:</label>
+                                <input name="allowedScopes" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">Redirect Uri:</label>
+                                <input name="redirectUris" type="text" class="form-control" required="">
+                            </div>
+
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label><input name="allowOfflineAccess" type="checkbox" />Refresh Token</label>
+                                </div>
+
+                                <div class="checkbox">
+                                    <label><input name="alwaysIncludeUserClaimsInIdToken" type="checkbox" />Include User's Claim in Id Token</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="secretEdit" class="tab-pane">
+                            <table id="secretTableEdit" class="table table-condensed">
+                                <tbody>
+                                    <tr>
+                                        <th>Value</th>
+                                        <th>Expire</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><input id="newValue" type="text"></td>
+                                        <td><input id="newExpire" type="date"></td>
+                                        <td><a id="addSecret">Add</a></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="clientForm" class="btn btn-primary">Create</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts
 {
     <script type="text/javascript" src="~/lib/jquery-ajax-unobtrusive/dist/jquery.unobtrusive-ajax.min.js"></script>
@@ -106,7 +200,39 @@
                     },
                     {
                         extend: "selectedSingle",
-                        text: "Edit"
+                        text: "Edit",
+                        action: function (e, dt, button, config) {
+                            var data = dt.row({ selected: true }).data();
+                            $('#editError').hide();
+                            $('#tabsEditClient a:first').tab('show');
+                            $('#clientFormEdit').trigger('reset');
+                            $('#secretTable tbody tr:not(:first)').remove();
+
+                            $('#clientEditModal input[name=id]').val(data.id);
+                            $('#clientEditModal input[name=clientName]').val(data.name);
+                            $('#clientEditModal input[name=clientId]').val(data.id);
+                            $('#clientEditModal input[name=allowedScopes]').val(data.scope.toString());
+                            $('#clientEditModal input[name=redirectUris]').val(data.redirectUri);
+
+                            if (data.allowOfflineAccess) {
+                                $('#clientFormEdit :checkbox[name=allowOfflineAccess]').prop('checked', true);
+                            } else {
+                                $('#clientFormEdit :checkbox[name=allowOfflineAccess]').prop('checked', false);
+                            }
+
+                            if (data.alwaysIncludeUserClaimsInIdToken) {
+                                $('#clientFormEdit :checkbox[name=alwaysIncludeUserClaimsInIdToken]').prop('checked', true);
+                            } else {
+                                $('#clientFormEdit :checkbox[name=alwaysIncludeUserClaimsInIdToken]').prop('checked', false);
+                            }
+
+                            $.each(data.secrets, function (index, value) {
+                                $('#secretTableEdit tbody').append('<tr><td data-field="key">' + value.value + '</td>' +
+                                    '<td data-field="value">' + value.expiration + '</td><td><a class="removeSecret">Remove</a></td></tr>');
+                            });
+
+                            $('#clientEditModal').modal({ backdrop: 'static' });
+                        }
                     },
                     {
                         extend: "selectedSingle",
@@ -151,6 +277,14 @@
                     var val = $(this).find('td[data-field=value]');
                     val.append($('<input>').attr('name', 'secrets[' + index + '][value]').attr('type', 'hidden').val(val.text()));
                 });
+            });
+
+            $(document).on("click", "[type='checkbox']", function (e) {
+                if (this.checked) {
+                    $(this).attr("value", "true");
+                } else {
+                    $(this).attr("value", "false");
+                }
             });
 
             clientDone = function (data, status, xhr) {

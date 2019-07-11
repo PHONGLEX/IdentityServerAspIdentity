@@ -2,26 +2,32 @@
 using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
+using IdentityServer4.Stores;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TokenService.Data;
 
 namespace TokenService.Services.Client
 {
     public class ClientServices : IClientServices
     {
         private IConfigurationDbContext _configurationDbContext;
+        private ApplicationDbContext _applicationDbContext;
+        private IAdminConfigurationDbContext _confContext;
 
-        public ClientServices(IConfigurationDbContext configurationDbContext)
+        public ClientServices(IConfigurationDbContext configurationDbContext, ApplicationDbContext applicationDbContext, IAdminConfigurationDbContext confContext)
         {
             _configurationDbContext = configurationDbContext;
+            _applicationDbContext = applicationDbContext;
+            _confContext = confContext;
         }
 
         public async Task<int> Create(IdentityServer4.Models.Client client)
         {
             await _configurationDbContext.Clients.AddAsync(client.ToEntity());
-            return _configurationDbContext.SaveChanges();
+            return await _configurationDbContext.SaveChangesAsync();
         }
 
         public async Task<int> Delete(string id)
@@ -31,13 +37,14 @@ namespace TokenService.Services.Client
             return _configurationDbContext.SaveChanges();
         }
 
-        IEnumerable<IdentityServer4.Models.Client> IClientServices.GetAll()
+        public async Task<IEnumerable<IdentityServer4.Models.Client>> GetAll()
         {
             var clients = new List<IdentityServer4.Models.Client>();
-
-            foreach (var item in _configurationDbContext.Clients)
+            foreach (var item in _confContext.Clients)
             {
-                clients.Add(item.ToModel());
+                var client = await _confContext.Clients.Include(x => x.AllowedScopes)
+                .Include(x => x.ClientSecrets).Where(x => x.Id == item.Id).SingleOrDefaultAsync();
+                clients.Add(client.ToModel());
             }
 
             return clients;
