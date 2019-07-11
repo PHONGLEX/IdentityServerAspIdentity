@@ -7,6 +7,8 @@ namespace TokenService.Services.Client
     {
         Task<IEnumerable<IdentityServer4.Models.Client>> GetAll();
         Task<int> Create(IdentityServer4.Models.Client client);
+        Task<int> Edit(IdentityServer4.EntityFramework.Entities.Client client);
         Task<int> Delete(string id);
+        Task<IdentityServer4.EntityFramework.Entities.Client> GetClientByClientId(string clientId);
     }
 }

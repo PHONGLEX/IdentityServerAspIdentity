@@ -100,10 +100,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-                <h4 class="modal-title">Add Client</h4>
+                <h4 class="modal-title">Edit Client</h4>
             </div>
             <div class="modal-body">
-                <form id="clientFormEdit" data-ajax="true" data-ajax-method="POST" data-ajax-url="/client/edit" data-ajax-success="clientDone" data-ajax-failure="clientFail">
+                <form id="clientFormEdit" data-ajax="true" data-ajax-method="POST" data-ajax-url="/client/edit" data-ajax-success="clientEditDone" data-ajax-failure="clientEditFail">
                     <div id="editError" class="alert alert-danger" role="alert" style="display: none;"></div>
                     <input name="id" type="hidden" />
                     <ul id="tabsEditClient" class="nav nav-tabs">
@@ -159,9 +159,9 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td><input id="newValue" type="text"></td>
-                                        <td><input id="newExpire" type="date"></td>
-                                        <td><a id="addSecret">Add</a></td>
+                                        <td><input id="newValueEdit" type="text"></td>
+                                        <td><input id="newExpireEdit" type="date"></td>
+                                        <td><a id="addEditSecret">Add</a></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -172,7 +172,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="submit" form="clientForm" class="btn btn-primary">Create</button>
+                <button type="submit" form="clientFormEdit" class="btn btn-primary">Update</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -206,7 +206,7 @@
                             $('#editError').hide();
                             $('#tabsEditClient a:first').tab('show');
                             $('#clientFormEdit').trigger('reset');
-                            $('#secretTable tbody tr:not(:first)').remove();
+                            $('#secretTableEdit tbody tr:not(:first)').remove();
 
                             $('#clientEditModal input[name=id]').val(data.id);
                             $('#clientEditModal input[name=clientName]').val(data.name);
@@ -264,7 +264,22 @@
                     alert('Incomplete entry');
             });
 
+            $('#addEditSecret').click(function () {
+                if ($('#newValueEdit').val() && $('#newExpireEdit').val()) {
+                    $('#secretTableEdit tbody').append('<tr><td data-field="key">' + $('#newValueEdit').val() + '</td>' +
+                        '<td data-field="value">' + $('#newExpireEdit').val() + '</td><td><a class="removeSecret">Remove</a></td></tr>');
+                    $('#newValueEdit, #newExpireEdit').val('');
+                }
+                else
+                    alert('Incomplete entry');
+            });
+
             $('#secretTable').on('click', 'a.removeSecret', function () {
+                if (confirm('Are you sure?'))
+                    $(this).closest('tr').remove();
+            });
+
+            $('#secretTableEdit').on('click', 'a.removeSecret', function () {
                 if (confirm('Are you sure?'))
                     $(this).closest('tr').remove();
             });
@@ -277,6 +292,25 @@
                     var val = $(this).find('td[data-field=value]');
                     val.append($('<input>').attr('name', 'secrets[' + index + '][value]').attr('type', 'hidden').val(val.text()));
                 });
+            });
+
+            $("#clientFormEdit").submit(function () {
+                $('#secretTableEdit tbody tr:gt(0)').each(function (index, elem) {
+                    var key = $(this).find('td[data-field=key]');
+                    key.append($('<input>').attr('name', 'secrets[' + index + '][key]').attr('type', 'hidden').val(key.text()));
+
+                    var val = $(this).find('td[data-field=value]');
+                    val.append($('<input>').attr('name', 'secrets[' + index + '][value]').attr('type', 'hidden').val(val.text()));
+                });
+
+                $(this).find(':checkbox').each(function (e) {
+                    if (this.checked) {
+                        $(this).attr("value", "true");
+                    } else {
+                        $(this).attr("value", "false");
+                    }
+                });
+
             });
 
             $(document).on("click", "[type='checkbox']", function (e) {
@@ -302,6 +336,15 @@
 
             function delFail(xhr, status, error) {
                 alert(xhr.responseText || error);
+            }
+
+            clientEditDone = function (data, status, xhr) {
+                $('#clientEditModal').modal('hide');
+                $('#clientTable').DataTable().ajax.reload(null, false);
+            }
+
+            clientEditFail = function (xhr, status, error) {
+                $('#editError').html(xhr.responseText || error).fadeIn();
             }
         });
     </script>

@@ -1,8 +1,6 @@
 ﻿using IdentityServer4.EntityFramework.Entities;
 using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
-using IdentityServer4.Models;
-using IdentityServer4.Stores;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,28 +11,30 @@ namespace TokenService.Services.Client
 {
     public class ClientServices : IClientServices
     {
-        private IConfigurationDbContext _configurationDbContext;
-        private ApplicationDbContext _applicationDbContext;
         private IAdminConfigurationDbContext _confContext;
 
-        public ClientServices(IConfigurationDbContext configurationDbContext, ApplicationDbContext applicationDbContext, IAdminConfigurationDbContext confContext)
+        public ClientServices(IAdminConfigurationDbContext confContext)
         {
-            _configurationDbContext = configurationDbContext;
-            _applicationDbContext = applicationDbContext;
             _confContext = confContext;
         }
 
         public async Task<int> Create(IdentityServer4.Models.Client client)
         {
-            await _configurationDbContext.Clients.AddAsync(client.ToEntity());
-            return await _configurationDbContext.SaveChangesAsync();
+            await _confContext.Clients.AddAsync(client.ToEntity());
+            return await _confContext.SaveChangesAsync();
         }
 
         public async Task<int> Delete(string id)
         {
-            var client = await _configurationDbContext.Clients.SingleOrDefaultAsync(c => c.ClientId.Equals(id));
-            _configurationDbContext.Clients.Remove(client);
-            return _configurationDbContext.SaveChanges();
+            var client = await _confContext.Clients.SingleOrDefaultAsync(c => c.ClientId.Equals(id));
+            _confContext.Clients.Remove(client);
+            return _confContext.SaveChanges();
+        }
+
+        public async Task<int> Edit(IdentityServer4.EntityFramework.Entities.Client client)
+        {
+            _confContext.Clients.Update(client);
+            return await _confContext.SaveChangesAsync();           
         }
 
         public async Task<IEnumerable<IdentityServer4.Models.Client>> GetAll()
@@ -43,11 +43,17 @@ namespace TokenService.Services.Client
             foreach (var item in _confContext.Clients)
             {
                 var client = await _confContext.Clients.Include(x => x.AllowedScopes)
-                .Include(x => x.ClientSecrets).Where(x => x.Id == item.Id).SingleOrDefaultAsync();
+                .Include(x => x.ClientSecrets).Include(x => x.RedirectUris).Where(x => x.Id == item.Id).SingleOrDefaultAsync();
                 clients.Add(client.ToModel());
             }
 
             return clients;
+        }
+
+        public async Task<IdentityServer4.EntityFramework.Entities.Client> GetClientByClientId(string clientId)
+        {
+            return await _confContext.Clients.Include(x => x.AllowedScopes)
+                .Include(x => x.ClientSecrets).Include(x => x.RedirectUris).Where(x => x.ClientId == clientId).SingleOrDefaultAsync();
         }
     }
 }
