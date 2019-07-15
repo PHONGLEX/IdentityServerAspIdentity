@@ -1,5 +1,4 @@
 ﻿using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
 using Microsoft.AspNetCore.Builder;
@@ -8,9 +7,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using TokenService.Data;
 using TokenService.Models;
 using TokenService.Services.Client;
@@ -60,7 +61,8 @@ namespace TokenService
 
                 // this enables automatic token cleanup. this is optional.
                 options.EnableTokenCleanup = true;
-            }).AddAspNetIdentity<ApplicationUser>();
+            }).AddAspNetIdentity<ApplicationUser>()
+            .AddSigningCredential(LoadCertificateFromStore());
 
             services.AddScoped<IUserServices, UserServices>();
             services.AddScoped<IClientServices, ClientServices>();
@@ -98,6 +100,15 @@ namespace TokenService
                     }
                     context.SaveChanges();
                 }
+
+                if (!context.IdentityResources.Any())
+                {
+                    foreach (var item in GetIdentityResources())
+                    {
+                        context.IdentityResources.Add(item.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
             }
         }
 
@@ -123,6 +134,33 @@ namespace TokenService
                     AllowedScopes = { "api1" }
                 }
             };
+        }
+
+        public static IEnumerable<IdentityResource> GetIdentityResources()
+        {
+            return new List<IdentityResource>
+            {
+                new IdentityResources.OpenId(),
+                new IdentityResources.Profile()
+                      };
+        }
+
+        public X509Certificate2 LoadCertificateFromStore()
+        {
+            //string thumbPrint = "5290d6a8c0e79d315f97d3779afaa7909f9b78a4";
+            string thumbPrint = "80f893da73b0f46daf1417805b796596aa5c93ea";
+
+            using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+            {
+                store.Open(OpenFlags.ReadOnly);
+                var certCollection = store.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, true);
+
+                if (certCollection.Count == 0)
+                {
+                    throw new Exception("The specified certificate wasn't found");
+                }
+                return certCollection[0];
+            }
         }
     }
 }

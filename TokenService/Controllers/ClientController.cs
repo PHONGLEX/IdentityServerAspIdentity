@@ -1,4 +1,5 @@
-﻿using IdentityServer4.EntityFramework.Mappers;
+﻿using IdentityServer4;
+using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using Microsoft.AspNetCore.Mvc;
@@ -72,6 +73,8 @@ namespace TokenService.Controllers
                     }
                     // the access token (and its claims) should be updated on a refresh token request
                     client.UpdateAccessTokenClaimsOnRefresh = true;
+                    // by default we're using Hybrid flow
+                    client.AllowedGrantTypes = GrantTypes.Hybrid;
 
                     var result = await _clientServices.Create(client);
                     return Json(result);
