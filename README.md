@@ -23,6 +23,8 @@ dotnet ef migrations add InitialAspNetIdentityDbMigration -c ApplicationDbContex
 
 
 =============================== Update database for AspNet Identity ===============================
+
+
 Update-Database -context ApplicationDbContext
 
 You should now see a ~/Data/Migrations/IdentityServer folder in the project. This contains the code for the newly created migrations.
