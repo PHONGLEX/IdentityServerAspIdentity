@@ -1,7 +1,7 @@
 # IdentityServerAspIdentity
 
 
-At first, we need to remove Data/Migrations folder.
+At first, we need to remove Data/Migrations folder along with create your own database for IdentityServer.
 
 Second, we need to fix the connection string in appsettings.json file.
 
@@ -10,11 +10,15 @@ Finally, to create the migrations, open a command prompt in the IdentityServer p
 =============================== For PersistantGrant ===============================
 dotnet ef migrations add InitialIdentityServerPersistedGrantDbMigration -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrantDb
 
+
 =============================== For Configuration ===============================
 dotnet ef migrations add InitialIdentityServerConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb
 
+
 =============================== For AspNet Identity ===============================
 dotnet ef migrations add InitialAspNetIdentityDbMigration -c ApplicationDbContext -o Data/Migrations --project TokenService
+
+
 
 =============================== Update database for AspNet Identity ===============================
 Update-Database -context ApplicationDbContext
