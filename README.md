@@ -12,10 +12,12 @@ dotnet ef migrations add InitialIdentityServerPersistedGrantDbMigration -c Persi
 
 
 =============================== For Configuration ===============================
+
 dotnet ef migrations add InitialIdentityServerConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb
 
 
 =============================== For AspNet Identity ===============================
+
 dotnet ef migrations add InitialAspNetIdentityDbMigration -c ApplicationDbContext -o Data/Migrations --project TokenService
 
 
