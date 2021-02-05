@@ -8,14 +8,14 @@ Second, we need to fix the connection string in appsettings.json file.
 Finally, to create the migrations, open a command prompt in the IdentityServer project directory. In the command prompt run these commands:
 
 =============================== For PersistantGrant ===============================
-dotnet ef migrations add InitialIdentityServerPersistedGrantDbMigration -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrantDb 
-dotnet ef migrations add InitialAspNetIdentityDbMigration -c ApplicationDbContext -o Data/Migrations --project TokenService
+dotnet ef migrations add InitialIdentityServerPersistedGrantDbMigration -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrantDb --project TokenService
+
 
 
 =============================== For Configuration ===============================
 
-dotnet ef migrations add InitialIdentityServerConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb 
-dotnet ef migrations add InitialAspNetIdentityDbMigration -c ApplicationDbContext -o Data/Migrations --project TokenService
+dotnet ef migrations add InitialIdentityServerConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb --project TokenService
+
 
 
 =============================== For AspNet Identity ===============================
